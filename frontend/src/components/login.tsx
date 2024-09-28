@@ -16,7 +16,7 @@ const Login = () => {
       email,
       password,
     };
-    const url = "https://votingapp-backend-8rrm.onrender.com/api/login";
+    const url = "https://votingapp-backend-1.onrender.com/api/login";
     const options = {
       method: "POST",
       headers: {

@@ -47,7 +47,7 @@ const Preview: React.FC = () => {
         return;
       }
       setIsLoading(true);
-      const url = `https://votingapp-backend-8rrm.onrender.com/api/preview?electionId=${electionId}`;
+      const url = `https://votingapp-backend-1.onrender.com/api/preview?electionId=${electionId}`;
       const options = {
         method: "GET",
         headers: {

@@ -32,7 +32,7 @@ const Results: React.FC = () => {
     const fetchResults = async () => {
       try {
         const response = await fetch(
-          `https://votingapp-backend-8rrm.onrender.com/api/results?electionId=${electionId}`,
+          `https://votingapp-backend-1.onrender.com/api/results?electionId=${electionId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

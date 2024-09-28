@@ -27,7 +27,7 @@ const Dashboard = () => {
           //console.log("No token. Sign in");
         }
 
-        const url = "https://votingapp-backend-8rrm.onrender.com/api/election";
+        const url = "https://votingapp-backend-1.onrender.com/api/election";
         const options = {
           method: "GET",
           headers: {

@@ -46,7 +46,7 @@ const ElectionDetails = () => {
   const [voteCount, setVoteCount] = useState<number>(0);
   const [copied, setCopied] = useState(false);
   const textRef = useRef<HTMLInputElement>(null);
-  const fullUrl = `https://votingapp-backend-8rrm.onrender.com/election/${electionId}/liveview`;
+  const fullUrl = `https://votingapp-backend-1.onrender.com/election/${electionId}/liveview`;
 
   useEffect(() => {
     setLivelink(fullUrl);
@@ -63,7 +63,7 @@ const ElectionDetails = () => {
 
       try {
         const response = await fetch(
-          `https://votingapp-backend-8rrm.onrender.com/api/election?id=${electionId}`,
+          `https://votingapp-backend-1.onrender.com/api/election?id=${electionId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -82,7 +82,7 @@ const ElectionDetails = () => {
         setQuestionCount(data?.questions_count || 0);
 
         const voteResponse = await fetch(
-          `https://votingapp-backend-8rrm.onrender.com/api/results?electionId=${electionId}`,
+          `https://votingapp-backend-1.onrender.com/api/results?electionId=${electionId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -131,7 +131,7 @@ const ElectionDetails = () => {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `https://votingapp-backend-8rrm.onrender.com/api/build?electionId=${electionId}`,
+          `https://votingapp-backend-1.onrender.com/api/build?electionId=${electionId}`,
           {
             method: "POST",
             headers: {

@@ -57,7 +57,7 @@ const Liveview: React.FC = () => {
   useEffect(() => {
     const getUserInfo = async () => {
       setIsLoading(true);
-      const url = `https://votingapp-backend-8rrm.onrender.com/api/liveview?electionId=${electionId}`;
+      const url = `https://votingapp-backend-1.onrender.com/api/liveview?electionId=${electionId}`;
       const options = {
         method: "GET",
         headers: {
@@ -121,7 +121,7 @@ const Liveview: React.FC = () => {
       responses: responses,
     };
 
-    const url = `https://votingapp-backend-8rrm.onrender.com/api/submit_ballot`;
+    const url = `https://votingapp-backend-1.onrender.com/api/submit_ballot`;
     const options = {
       method: "POST",
       headers: {

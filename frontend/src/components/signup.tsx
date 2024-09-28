@@ -23,7 +23,7 @@ const Signup = () => {
       type,
       orgname,
     };
-    const url = "https://votingapp-backend-8rrm.onrender.com/api/signup";
+    const url = "https://votingapp-backend-1.onrender.com/api/signup";
     const options = {
       method: "POST",
       headers: {

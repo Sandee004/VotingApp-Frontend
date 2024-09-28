@@ -26,7 +26,7 @@ const MultipleQs: React.FC = () => {
       }
 
       const token = localStorage.getItem("token");
-      const url = `https://votingapp-backend-8rrm.onrender.com/api/questions?election_id=${electionId}`;
+      const url = `https://votingapp-backend-1.onrender.com/api/questions?election_id=${electionId}`;
       const options = {
         method: "GET",
         headers: {
@@ -153,7 +153,7 @@ const MultipleQs: React.FC = () => {
       if (!token) {
         alert("No token gotten. Login");
       }
-      const url = "https://votingapp-backend-8rrm.onrender.com/api/questions";
+      const url = "https://votingapp-backend-1.onrender.com/api/questions";
       const options = {
         method: "POST",
         headers: {

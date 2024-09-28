@@ -36,7 +36,7 @@ const CreateElection = () => {
     if (!token) {
       alert("Authentication failed. Pls login");
     }
-    const url = "https://votingapp-backend-8rrm.onrender.com/api/election";
+    const url = "https://votingapp-backend-1.onrender.com/api/election";
     const options = {
       method: "POST",
       headers: {
