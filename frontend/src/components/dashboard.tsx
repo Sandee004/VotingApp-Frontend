@@ -46,7 +46,9 @@ const Dashboard = () => {
         //console.log(data);
         setFetchedElections(data);
       } catch (error) {
-        console.error("Error fetching elections:", error);
+        const myError = error as { message: string };
+        console.error("Error message:", myError.message);
+        alert(myError.message);
       } finally {
         setIsLoading(false);
       }
@@ -99,7 +101,7 @@ const Dashboard = () => {
           ))}
         </div>
       ) : (
-        <p>You haven't created any elections yet.</p>
+        <p className="text-center">You haven't created any elections yet.</p>
       )}
     </>
   );

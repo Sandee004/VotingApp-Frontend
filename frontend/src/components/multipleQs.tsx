@@ -15,7 +15,6 @@ interface Question {
 
 const MultipleQs: React.FC = () => {
   const navigate = useNavigate();
-  //const electionId = localStorage.getItem("electionID");
   const { electionId } = useParams();
   const [questions, setQuestions] = useState<Question[]>([]);
 

@@ -9,7 +9,8 @@ import MultipleQs from "./components/multipleQs";
 import Preview from "./components/preview";
 import Thanks from "./components/thanks";
 import Results from "./components/results";
-import LiveLink from "./components/live-view";
+import Liveview from "./components/live-view";
+import ThanksPreview from "./components/thanks-preview";
 
 const App = () => {
   return (
@@ -27,8 +28,12 @@ const App = () => {
         />
         <Route path="/election/:electionId/preview" element={<Preview />} />
         <Route path="/thanks" element={<Thanks />} />
+        <Route
+          path="/election/:electionId/thanks-preview"
+          element={<ThanksPreview />}
+        />
         <Route path="/election/:electionId/results" element={<Results />} />
-        <Route path="/election/:electionId/liveview" element={<LiveLink />} />
+        <Route path="/election/:electionId/liveview" element={<Liveview />} />
       </Routes>
     </Router>
   );

@@ -6,7 +6,6 @@ const CreateElection = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [endDateError, setEndDateError] = useState("");
-  //const token = localStorage.getItem("jwtToken");
   const navigate = useNavigate();
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,8 +63,9 @@ const CreateElection = () => {
         console.error("No election ID received in response");
       }
     } catch (error) {
-      console.error("Error submitting signup:", error);
-      alert("An unexpected error occurred. Please try again later.");
+      const myError = error as { message: string };
+      console.error("Error message:", myError.message);
+      alert(myError.message);
     }
   };
 

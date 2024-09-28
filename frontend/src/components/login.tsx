@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Loader from "./loader";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const data = {
       email,
       password,
     };
-    //console.log(data);
     const url = "https://votingapp-backend-8rrm.onrender.com/api/login";
     const options = {
       method: "POST",
@@ -38,10 +40,13 @@ const Login = () => {
     } catch (error) {
       console.error("Error submitting signup:", error);
       alert("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
     <>
+      {isLoading && <Loader />}
       <p className="font-bold text-2xl text-center my-10">Register</p>
 
       <form

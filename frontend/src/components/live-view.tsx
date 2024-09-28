@@ -1,5 +1,6 @@
 import React, { FormEvent, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import Loader from "./loader";
 
 interface Option {
   id?: string;
@@ -34,27 +35,33 @@ interface Response {
   answer: string;
 }
 
-const Preview: React.FC = () => {
+const Liveview: React.FC = () => {
   const [orgName, setOrgname] = useState<string | null>(null);
   const [electionTitle, setElectionTitle] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { electionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const orgnameParam = searchParams.get("orgname");
+
+    if (orgnameParam) {
+      setOrgname(orgnameParam);
+    }
+  }, [location]);
 
   useEffect(() => {
     const getUserInfo = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Authentication failed. Please login");
-        return;
-      }
-      const url = `https://votingapp-backend-8rrm.onrender.com/api/preview?electionId=${electionId}`;
+      setIsLoading(true);
+      const url = `https://votingapp-backend-8rrm.onrender.com/api/liveview?electionId=${electionId}`;
       const options = {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       };
       try {
@@ -63,8 +70,6 @@ const Preview: React.FC = () => {
           throw new Error("Failed to fetch election data");
         }
         const data: UserInfo = await response.json();
-        console.log(data);
-        setOrgname(data.orgname);
         setElectionTitle(data.election.title);
 
         setQuestions(
@@ -75,7 +80,11 @@ const Preview: React.FC = () => {
         );
         //setQuestions(data.election.questions);
       } catch (error) {
-        console.error("Error fetching election data:", error);
+        const myError = error as { message: string };
+        console.error("Error message:", myError.message);
+        alert(myError.message);
+      } finally {
+        setIsLoading(false);
       }
     };
     getUserInfo();
@@ -125,19 +134,27 @@ const Preview: React.FC = () => {
     try {
       const response = await fetch(url, options);
       if (!response.ok) {
-        throw new Error("Failed to submit ballot");
+        if (response.status === 400) {
+          // Handle 400 error specifically
+          const errorData = await response.json();
+          throw new Error(errorData.message);
+        } else {
+          throw new Error("Failed to submit ballot");
+        }
       }
       const result = await response.json();
       console.log(result.message);
       navigate("/thanks");
     } catch (error) {
-      console.error("Error submitting ballot:", error);
-      alert("Failed to submit ballot. Please try again.");
+      const myError = error as { message: string };
+      console.error("Error message:", myError.message);
+      alert(myError.message);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
+      {isLoading && <Loader />}
       <div className="bg-green-500 text-white p-4 rounded-lg shadow-md mb-6">
         <h1 className="text-2xl font-bold text-center">{orgName}</h1>
         <h2 className="text-xl text-center mt-2">{electionTitle}</h2>
@@ -193,4 +210,4 @@ const Preview: React.FC = () => {
   );
 };
 
-export default Preview;
+export default Liveview;

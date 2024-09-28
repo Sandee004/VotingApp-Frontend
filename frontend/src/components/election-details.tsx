@@ -1,5 +1,14 @@
-import { Calendar, House, Link, MessageCircleQuestion } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+  Calendar,
+  Clipboard,
+  ClipboardCheck,
+  House,
+  Link2,
+  List,
+  MessageCircleQuestion,
+  User,
+} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Loader from "./loader";
 
@@ -13,6 +22,7 @@ interface Question {
   question_text: string;
   question_type: string;
   options: Option[];
+  votes: Record<string, number>;
 }
 
 interface ElectionData {
@@ -22,17 +32,24 @@ interface ElectionData {
   endDate: string;
   questions: Question[];
   is_built: boolean;
+  orgname: string;
+  status: string;
 }
 
 const ElectionDetails = () => {
   const navigate = useNavigate();
   const { electionId } = useParams<{ electionId: string }>();
-  //const [showLoginModal, setShowLoginModal] = useState(false);
   const [electionData, setElectionData] = useState<ElectionData | null>(null);
   const [questionCount, setQuestionCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [livelink, setLivelink] = useState("");
+  const [voteCount, setVoteCount] = useState<number>(0);
+  const [copied, setCopied] = useState(false);
+  const textRef = useRef<HTMLInputElement>(null);
+  const fullUrl = `https://votingapp-backend-8rrm.onrender.com/election/${electionId}/liveview`;
 
   useEffect(() => {
+    setLivelink(fullUrl);
     const fetchElectionDetails = async () => {
       if (!electionId) return;
 
@@ -54,9 +71,6 @@ const ElectionDetails = () => {
           }
         );
 
-        console.log("Response status:", response.status);
-        console.log("Response headers:", response.headers);
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Error response:", errorText);
@@ -64,21 +78,42 @@ const ElectionDetails = () => {
         }
 
         const data = await response.json();
-        console.log("Response data:", data);
-
-        //alert(data.message);
         setElectionData(data);
         setQuestionCount(data?.questions_count || 0);
+
+        const voteResponse = await fetch(
+          `https://votingapp-backend-8rrm.onrender.com/api/results?electionId=${electionId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (voteResponse.ok) {
+          const voteData = await voteResponse.json();
+          const totalVotes = voteData.election.questions.reduce(
+            (total: number, question: Question) =>
+              total +
+              Object.values(question.votes).reduce(
+                (sum: number, count: number) => sum + count,
+                0
+              ),
+            0
+          );
+          setVoteCount(totalVotes);
+        }
       } catch (error) {
-        console.error("Error fetching election details:", error);
-        alert("Failed to load election details. Please try again.");
+        const myError = error as { message: string };
+        console.error("Error message:", myError.message);
+        alert(myError.message);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchElectionDetails();
-  }, [electionId, navigate]);
+  }, [electionId, fullUrl, navigate]);
 
   const buildElection = async () => {
     if (!electionId) return;
@@ -106,9 +141,6 @@ const ElectionDetails = () => {
           }
         );
 
-        console.log("Response status:", response.status);
-        console.log("Response headers:", response.headers);
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Error response:", errorText);
@@ -118,9 +150,9 @@ const ElectionDetails = () => {
         const data = await response.json();
         console.log("Response data:", data);
 
-        //alert(data.message);
-        // Update the local state to reflect the change
-        setElectionData((prev) => (prev ? { ...prev, is_built: true } : null));
+        setElectionData((prev) =>
+          prev ? { ...prev, is_built: true, status: "active" } : null
+        );
       } catch (error) {
         console.error("Error building election:", error);
         alert("Failed to build election. Please try again.");
@@ -129,11 +161,96 @@ const ElectionDetails = () => {
       }
     }
   };
+
   const previewClick = () => {
     if (electionId) {
-      navigate(`/election/${electionId}/preview`);
+      console.log(questionCount);
+      if (questionCount !== 0) {
+        navigate(`/election/${electionId}/preview`);
+      } else {
+        alert("Add questions first");
+      }
     } else {
       console.error("Election ID not found");
+    }
+  };
+
+  const liveClick = () => {
+    if (electionId && electionData) {
+      const url = new URL(
+        `/election/${electionId}/liveview`,
+        window.location.origin
+      );
+      url.searchParams.append("orgname", electionData.orgname);
+      window.open(url.toString(), "_blank");
+    }
+  };
+
+  const handleCopy = () => {
+    if (textRef.current && electionData?.is_built) {
+      textRef.current.select();
+      try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (err) {
+        console.error("Failed to copy text: ", err);
+      }
+    }
+  };
+
+  const seeResults = () => {
+    navigate(`/election/${electionId}/results`);
+  };
+
+  const getStatusButton = () => {
+    if (!electionData) return null;
+
+    if (!electionData.is_built) {
+      return (
+        <button
+          onClick={buildElection}
+          title="Build election"
+          className="bg-orange-400 py-1 px-3"
+        >
+          Building
+        </button>
+      );
+    }
+
+    switch (electionData.status) {
+      case "active":
+        return (
+          <button
+            title="Election is active"
+            className="bg-green-500 text-white py-1 px-3"
+            disabled={true}
+          >
+            Active
+          </button>
+        );
+      case "ended":
+        return (
+          <button
+            title="Election has ended"
+            className="bg-red-500 text-white py-1 px-3"
+            disabled={true}
+          >
+            Ended
+          </button>
+        );
+      default:
+        return (
+          <button
+            title="Election status unknown"
+            className="bg-gray-400 py-1 px-3"
+            disabled={true}
+          >
+            Unknown
+          </button>
+        );
     }
   };
 
@@ -149,18 +266,7 @@ const ElectionDetails = () => {
                 <House />
                 <p className="font-bold">Overview</p>
               </div>
-              <button
-                onClick={buildElection}
-                title="Build election"
-                className={
-                  electionData.is_built
-                    ? "bg-green-500 text-white py-1 px-3"
-                    : "bg-gray-400 py-1 px-3"
-                }
-                disabled={electionData.is_built}
-              >
-                {electionData.is_built ? "Active" : "Building"}
-              </button>
+              {getStatusButton()}
             </div>
 
             <div className="text-sm mx-auto w-[94%] mt-6">
@@ -208,17 +314,81 @@ const ElectionDetails = () => {
 
             <div className="mt-3 w-[94%] mx-auto border-2 border-black">
               <div className="border-2 border-b-black gap-3 flex items-center p-2">
-                <Link size={15} />
+                <Link2 size={15} />
                 <p className="font-bold">Election Url</p>
               </div>
-              <div className="p-2 text-center">
-                <button onClick={previewClick}>
-                  Click here to see voting site
-                </button>
+
+              <div className="py-3 border-b-2 border-black px-2">
+                <p>Preview Url</p>
+                <div className="flex flex-row my-1">
+                  <input
+                    className=" w-[90%] border-slate-500 border-[1px] px-2 py-1"
+                    disabled
+                    placeholder="Click the button to preview"
+                  />
+                  <button
+                    className={
+                      electionData?.status === "ended"
+                        ? "bg-gray-400 py-1 px-2"
+                        : "bg-green-400 py-1 px-2"
+                    }
+                    onClick={previewClick}
+                    disabled={electionData?.status == "ended"}
+                  >
+                    Open
+                  </button>
+                </div>
+              </div>
+
+              <div className=" py-3 px-2">
+                <p>Live Url</p>
+                <div className="flex flex-row my-1 justify-center items-center">
+                  <input
+                    className="w-[90%] border-slate-500 border-[1px] px-2 py-1"
+                    disabled
+                    ref={textRef}
+                    placeholder={livelink}
+                  />
+
+                  <button
+                    onClick={handleCopy}
+                    className={
+                      electionData.is_built
+                        ? "bg-green-300 py-[5px] px-[2px] border-r-2 border-black"
+                        : "bg-gray-400 py-[5px] px-[2px] border-r-2 border-black"
+                    }
+                    title={copied ? "Copied!" : "Copy to clipboard"}
+                  >
+                    {copied ? (
+                      <ClipboardCheck size={24} />
+                    ) : (
+                      <Clipboard size={24} />
+                    )}
+                  </button>
+                  <button
+                    disabled={!electionData.is_built}
+                    onClick={liveClick}
+                    className={
+                      electionData.is_built
+                        ? "bg-green-400 py-[5px] px-2"
+                        : "bg-gray-400 py-[5px] px-2"
+                    }
+                  >
+                    Open
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="bg-pink-500 w-[93%] mx-auto flex justify-between items-center px-3 mt-10 py-2">
+            <div className="bg-orange-400 w-[93%] mx-auto flex justify-between items-center px-3 mt-10 py-2">
+              <User size={25} />
+              <div className="flex flex-col items-center justify-center font-bold">
+                <p>{voteCount}</p>
+                <p>Voters</p>
+              </div>
+            </div>
+
+            <div className="bg-pink-500 w-[93%] mx-auto flex justify-between items-center px-3 mt-4 py-2">
               <MessageCircleQuestion size={25} />
               <div className="flex flex-col font-bold items-center justify-center">
                 <p>{questionCount}</p>
@@ -226,11 +396,25 @@ const ElectionDetails = () => {
               </div>
             </div>
 
+            <div className="bg-red-400 w-[93%] mx-auto flex flex-row justify-between items-center px-3 mt-4 py-4">
+              <button
+                onClick={seeResults}
+                className="flex w-[100%] justify-between items-center"
+              >
+                <List />
+                <div className=" font-bold ">
+                  <p>Results</p>
+                </div>
+              </button>
+            </div>
+
             <button
               onClick={() => navigate(`/election/${electionId}/multiple-type`)}
-              disabled={electionData.is_built}
+              disabled={
+                electionData.is_built || electionData?.status == "ended"
+              }
               className={
-                electionData.is_built
+                electionData.is_built || electionData.status == "ended"
                   ? "bg-gray-400 p-2 w-[93%] mx-auto flex justify-center mt-3 mb-5"
                   : "bg-green-400 p-2 w-[93%] mx-auto flex justify-center mt-3 mb-5"
               }
@@ -242,52 +426,6 @@ const ElectionDetails = () => {
           <div></div>
         )}
       </>
-
-      {/*showLoginModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-white py-8 rounded-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-green-400 flex flex-row justify-between items-center px-2 py-2">
-              <p>Add Ballot Question</p>
-              <button
-                onClick={handleCloseModal}
-                className="px-2 border-black border-2"
-              >
-                X
-              </button>
-            </div>
-            <p className="px-2">
-              What type of question would you like to add to the ballot?
-            </p>
-            <div className="flex flex-row bg-slate-100 justify-between items-center m-2 py-4 px-3">
-              <p>Multiple Choice</p>
-              <button
-                onClick={() =>
-                  navigate(`/election/${electionId}/multiple-type`)
-                }
-                className="bg-green-400 px-2 px-1 text-white"
-              >
-                Select
-              </button>
-            </div>
-
-            <div className="flex flex-row bg-slate-100 justify-between items-center m-2 py-4 px-3">
-              <p>Ranked Choice</p>
-              <button
-                onClick={() => navigate("/register")}
-                className="bg-green-400 px-2 px-1 text-white"
-              >
-                Select
-              </button>
-            </div>
-          </div>
-        </div>
-      )*/}
     </div>
   );
 };

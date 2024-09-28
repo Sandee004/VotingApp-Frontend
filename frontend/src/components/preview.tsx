@@ -1,5 +1,6 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Loader from "./loader";
 
 interface Option {
   id?: string;
@@ -29,17 +30,13 @@ interface UserInfo {
   election: Election;
 }
 
-interface Response {
-  question_id: number;
-  answer: string;
-}
-
 const Preview: React.FC = () => {
   const [orgName, setOrgname] = useState<string | null>(null);
   const [electionTitle, setElectionTitle] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [responses, setResponses] = useState<Response[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { electionId } = useParams();
+  console.log(electionId);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,6 +46,7 @@ const Preview: React.FC = () => {
         alert("Authentication failed. Please login");
         return;
       }
+      setIsLoading(true);
       const url = `https://votingapp-backend-8rrm.onrender.com/api/preview?electionId=${electionId}`;
       const options = {
         method: "GET",
@@ -76,27 +74,29 @@ const Preview: React.FC = () => {
         //setQuestions(data.election.questions);
       } catch (error) {
         console.error("Error fetching election data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     getUserInfo();
   }, [electionId]);
 
   const handleOptionChange = (questionId: number, answer: string) => {
-    setResponses((prevResponses) => {
-      const existingResponseIndex = prevResponses.findIndex(
-        (r) => r.question_id === questionId
+    console.log("Selected answer:", answer);
+    setQuestions((prevQuestions) => {
+      const existingResponseIndex = prevQuestions.findIndex(
+        (r) => r.id === questionId
       );
       if (existingResponseIndex !== -1) {
-        return prevResponses.map((r) =>
-          r.question_id === questionId ? { ...r, answer } : r
+        return prevQuestions.map((r) =>
+          r.id === questionId ? { ...r, answered: true } : r
         );
       } else {
-        return [...prevResponses, { question_id: questionId, answer }];
+        return prevQuestions.map((q) =>
+          q.id === questionId ? { ...q, answered: true } : q
+        );
       }
     });
-    setQuestions(
-      questions.map((q) => (q.id === questionId ? { ...q, answered: true } : q))
-    );
   };
 
   const submitBallot = async (e: FormEvent) => {
@@ -105,40 +105,15 @@ const Preview: React.FC = () => {
     if (hasUnanswered) {
       alert("Please answer all questions before submitting");
       return;
-    }
-
-    const data = {
-      election_id: electionId,
-      responses: responses,
-    };
-
-    const url = `https://votingapp-backend-8rrm.onrender.com/api/submit_ballot`;
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        //Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    };
-
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error("Failed to submit ballot");
-      }
-      const result = await response.json();
-      console.log(result.message);
-      navigate("/thanks");
-    } catch (error) {
-      console.error("Error submitting ballot:", error);
-      alert("Failed to submit ballot. Please try again.");
+    } else {
+      navigate(`/election/${electionId}/thanks-preview`);
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <div className="bg-green-500 text-white p-4 rounded-lg shadow-md mb-6">
+      {isLoading && <Loader />}
+      <div className="bg-blue-500 text-white p-4 rounded-lg shadow-md mb-6">
         <h1 className="text-2xl font-bold text-center">{orgName}</h1>
         <h2 className="text-xl text-center mt-2">{electionTitle}</h2>
       </div>
@@ -171,7 +146,7 @@ const Preview: React.FC = () => {
                         onChange={(e) =>
                           handleOptionChange(question.id, e.target.value)
                         }
-                        className="form-radio h-5 w-5 text-green-600"
+                        className="form-radio h-5 w-5 text-blue-600"
                       />
                       <span className="text-gray-700">{optionText}</span>
                     </label>
@@ -185,7 +160,7 @@ const Preview: React.FC = () => {
       <button
         type="submit"
         onClick={submitBallot}
-        className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-300"
+        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-300"
       >
         Submit Ballot
       </button>

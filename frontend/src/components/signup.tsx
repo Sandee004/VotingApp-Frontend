@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Loader from "./loader";
 
 const Signup = () => {
   //const [isLoading, setIsLoading] = useState(false);
@@ -8,10 +9,12 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [type, setType] = useState("");
   const [orgname, setOrgname] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const data = {
       username,
@@ -20,7 +23,6 @@ const Signup = () => {
       type,
       orgname,
     };
-    //console.log(data);
     const url = "https://votingapp-backend-8rrm.onrender.com/api/signup";
     const options = {
       method: "POST",
@@ -40,12 +42,16 @@ const Signup = () => {
       console.log("User created successfully");
       navigate("/login");
     } catch (error) {
-      console.error("Error submitting signup:", error);
-      alert("An unexpected error occurred. Please try again later.");
+      const myError = error as { message: string };
+      console.error("Error message:", myError.message);
+      alert(myError.message);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
     <>
+      {isLoading && <Loader />}
       <p className="font-bold text-2xl text-center my-10">Register</p>
 
       <form
@@ -91,7 +97,7 @@ const Signup = () => {
             setType(e.target.value);
           }}
         >
-          <option value="">----</option>
+          <option value="">Type of Business</option>
           <option value="School">School</option>
           <option value="Organisation">Organisation</option>
         </select>
