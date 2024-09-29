@@ -47,7 +47,7 @@ const Login = () => {
   return (
     <>
       {isLoading && <Loader />}
-      <p className="font-bold text-2xl text-center my-10">Register</p>
+      <p className="font-bold text-2xl text-center my-10">Login</p>
 
       <form
         className="flex flex-col justify-center items-center"
