@@ -175,7 +175,7 @@ const ElectionDetails = () => {
     }
   };
 
-  const liveClick = () => {
+  /*const liveClick = () => {
     if (electionId && electionData) {
       const url = new URL(
         `/election/${electionId}/liveview`,
@@ -183,6 +183,11 @@ const ElectionDetails = () => {
       );
       url.searchParams.append("orgname", electionData.orgname);
       window.open(url.toString(), "_blank");
+    }
+  };*/
+  const liveClick = () => {
+    if (electionId && electionData) {
+      navigate(`/election/${electionId}/liveview`);
     }
   };
 
