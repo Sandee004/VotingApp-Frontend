@@ -46,7 +46,7 @@ const ElectionDetails = () => {
   const [voteCount, setVoteCount] = useState<number>(0);
   const [copied, setCopied] = useState(false);
   const textRef = useRef<HTMLInputElement>(null);
-  const fullUrl = `https://votingapp-backend-1.onrender.com/election/${electionId}/liveview`;
+  const fullUrl = `${window.location.origin}/election/${electionId}/liveview`;
 
   useEffect(() => {
     setLivelink(fullUrl);
@@ -80,6 +80,11 @@ const ElectionDetails = () => {
         const data = await response.json();
         setElectionData(data);
         setQuestionCount(data?.questions_count || 0);
+
+        const liveLinkWithOrgName = `${fullUrl}?orgname=${encodeURIComponent(
+          data.orgname
+        )}`;
+        setLivelink(liveLinkWithOrgName);
 
         const voteResponse = await fetch(
           `https://votingapp-backend-1.onrender.com/api/results?electionId=${electionId}`,
@@ -175,7 +180,7 @@ const ElectionDetails = () => {
     }
   };
 
-  /*const liveClick = () => {
+  const liveClick = () => {
     if (electionId && electionData) {
       const url = new URL(
         `/election/${electionId}/liveview`,
@@ -184,22 +189,19 @@ const ElectionDetails = () => {
       url.searchParams.append("orgname", electionData.orgname);
       window.open(url.toString(), "_blank");
     }
-  };*/
-  const liveClick = () => {
+  };
+  /*const liveClick = () => {
     if (electionId && electionData) {
       navigate(`/election/${electionId}/liveview`);
     }
-  };
+  };*/
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (textRef.current && electionData?.is_built) {
-      textRef.current.select();
       try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }
+        await navigator.clipboard.writeText(livelink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (err) {
         console.error("Failed to copy text: ", err);
       }
@@ -352,7 +354,7 @@ const ElectionDetails = () => {
                     className="w-[90%] border-slate-500 border-[1px] px-2 py-1"
                     disabled
                     ref={textRef}
-                    placeholder={livelink}
+                    value={livelink}
                   />
 
                   <button
